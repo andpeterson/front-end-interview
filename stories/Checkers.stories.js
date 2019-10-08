@@ -24,7 +24,12 @@ class Board extends React.Component {
       [2, 0, 2, 0, 2, 0, 2, 0]
     ]
   };
-
+  spaceSelected = () => {
+    console.log("SelectedSpace:");
+  };
+  pieceSelected = () => {
+    console.log("SelectedPiece:");
+  };
   render() {
     const spaceSize = this.props.size / 8;
     const pieceRadius = spaceSize / 2;
@@ -52,6 +57,7 @@ class Board extends React.Component {
                 size={spaceSize}
                 x={spaceX}
                 y={spaceY}
+                onClick={this.spaceSelected}
               />
             );
           });
@@ -74,6 +80,7 @@ class Board extends React.Component {
                 centerY={spaceY + pieceRadius}
                 player={space}
                 radius={pieceRadius * 0.75}
+                onClick={this.pieceSelected}
               />
             );
           });
@@ -92,6 +99,7 @@ class Space extends React.Component {
         width={this.props.size}
         x={this.props.x}
         y={this.props.y}
+        onClick={this.props.onClick}
       />
     );
   }
@@ -105,7 +113,34 @@ class Piece extends React.Component {
         cy={this.props.centerY}
         fill={this.props.player === 1 ? "white" : "red"}
         r={this.props.radius}
+        onClick={this.props.onClick}
       />
     );
   }
 }
+
+/* Questions:
+  - What is the purpose of the key value in the Piece and the Space class?
+  - Are we guaranteed the boards position on the screen? (Is it valid to use postion to determine piece?)
+  - so that Player One takes as many turns as possible and then Player Two does the same? (From README 2)(refers to jumps?)
+  - there are some unused props like key and radius? Can I modify how these fields are used?
+*/
+
+/* ToDo
+  + Be able to click on pieces
+  - Store which piece was selected
+  - Move piece to selected space
+  - Restrict to specific spaces to move to
+  - Add flags for testing (example restrict where to place pieces)
+  - Restrict which player is allowed to go based off turns
+  - If a piece is captured it is removed from the board
+  - Win condition
+  - If a piece reaches the opposite side it becomes a king
+*/
+
+/* Stretch
+  - Click and drag pieces
+  - Suggestions
+  - Ai Opponent
+  - Timing Turns
+*/
