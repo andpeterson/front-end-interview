@@ -43,12 +43,24 @@ class Board extends React.Component {
       [0, 2, 0, 2, 0, 2, 0, 2],
       [2, 0, 2, 0, 2, 0, 2, 0]
     ],
-    selectedPiece: { x: -1, y: -1 },
-    isPieceSelected: false
+    selectedPiece: { x: 0, y: 0 },
+    isPieceSelected: false,
+    activePlayer: Player1
   };
 
-  getBoardPiece = position => {
-    return this.state.board[position.y][position.x];
+  getBoardPiece = position => this.state.board[position.y][position.x];
+
+  getPiecePlayer = position => {
+    const piece = this.getBoardPiece(position);
+    if (piece == BoardPiece.Player1Man || piece == BoardPiece.Player1King) {
+      return Player1;
+    } else if (
+      piece == BoardPiece.Player2Man ||
+      piece == BoardPiece.Player2King
+    ) {
+      return Player2;
+    }
+    throw `Valid piece not found on (${position.x},${position.y})`;
   };
 
   isValidKingMove = () => {
@@ -65,7 +77,6 @@ class Board extends React.Component {
       piece == BoardPiece.Player1Man ? Direction.Down : Direction.Up;
     const deltaX = newPos.x - oldPos.x;
     const deltaY = newPos.y - oldPos.y;
-    console.log(`pd: ${playersDirection} delta: ${deltaY}`);
     if (
       this.getBoardPiece(newPos) == BoardPiece.Empty && //can only step onto an empty space
       (deltaX + deltaY) % 2 == 0 && //has to travel on diagonals
@@ -84,6 +95,10 @@ class Board extends React.Component {
       gameBoard[newPos.y][newPos.x] = gameBoard[oldPos.y][oldPos.x];
       gameBoard[oldPos.y][oldPos.x] = BoardPiece.Empty;
       this.setState({ board: gameBoard, isPieceSelected: false });
+      const otherPlayer =
+        this.getPiecePlayer(newPos) == Player1 ? Player2 : Player1;
+      this.setState({ activePlayer: otherPlayer }); //try to combine
+      console.log(`Player${otherPlayer}'s turn`);
     }
   };
 
@@ -98,16 +113,17 @@ class Board extends React.Component {
   };
 
   pieceSelected = piece => {
-    console.log(piece);
-    const spaceSize = this.props.size / 8;
-    const pieceX = Math.floor(piece.props.centerX / spaceSize);
-    const pieceY = Math.floor(piece.props.centerY / spaceSize);
-    this.setState({
-      selectedPiece: { x: pieceX, y: pieceY },
-      isPieceSelected: true
-    });
+    if (piece.props.player == this.state.activePlayer) {
+      const spaceSize = this.props.size / 8;
+      const pieceX = Math.floor(piece.props.centerX / spaceSize);
+      const pieceY = Math.floor(piece.props.centerY / spaceSize);
+      this.setState({
+        selectedPiece: { x: pieceX, y: pieceY },
+        isPieceSelected: true
+      });
 
-    console.log("Selected Piece:", Math.floor(pieceX), Math.floor(pieceY));
+      console.log("Selected Piece:", Math.floor(pieceX), Math.floor(pieceY));
+    }
   };
 
   render() {
@@ -224,7 +240,7 @@ class Piece extends React.Component {
   + Restrict to specific spaces to move to
   + Restrict Man Pieces Direction
   - Add flags for testing (example restrict where to place pieces)
-  - Restrict which player is allowed to go based off turns
+  + Restrict which player is allowed to go based off turns
   - If a piece is captured it is removed from the board
   - Win condition
   - If a piece reaches the opposite side it becomes a king
@@ -240,6 +256,7 @@ class Piece extends React.Component {
   - No Magic Numbers, including gameboard 0, 1, 2
   - Code Comments
   - Semi-colons
+  - Test functions (example Empty into getPlayer)
 */
 
 /* Stretch
