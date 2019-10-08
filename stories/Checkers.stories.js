@@ -11,6 +11,8 @@ export const Checkers = () => {
   return <Board size={400} />;
 };
 
+const NoPieceSelected = { x: -1, y: -1 };
+
 class Board extends React.Component {
   state = {
     board: [
@@ -23,14 +25,32 @@ class Board extends React.Component {
       [0, 2, 0, 2, 0, 2, 0, 2],
       [2, 0, 2, 0, 2, 0, 2, 0]
     ],
-    selectedPiece: { x: 0, y: 0 }
+    selectedPiece: NoPieceSelected
   };
 
-  spaceSelected = (x, y) => {
+  movePiece = (oldPos, newPos) => {
+    let gameBoard = this.state.board; //temp
+    console.log(
+      `old x: ${oldPos.x} y: ${oldPos.y} val: ${gameBoard[oldPos.y][oldPos.x]}`
+    );
+    console.log(
+      `new x: ${newPos.x} y: ${newPos.y} val: ${gameBoard[newPos.y][newPos.x]}`
+    );
+    gameBoard[newPos.y][newPos.x] = gameBoard[oldPos.y][oldPos.x];
+    gameBoard[oldPos.y][oldPos.x] = 0;
+    this.setState({ board: gameBoard });
+    selectedPiece = NoPieceSelected;
+  };
+
+  spaceSelected = (new_x, new_y) => {
     const spaceSize = this.props.size / 8;
-    x /= spaceSize;
-    y /= spaceSize;
-    console.log("Selected Space:", x, y);
+    new_x /= spaceSize;
+    new_y /= spaceSize;
+
+    if (this.state.selectedPiece != NoPieceSelected) {
+      this.movePiece(this.state.selectedPiece, { x: new_x, y: new_y }); //bad format
+    }
+    console.log("Selected Space:", new_x, new_y);
   };
 
   pieceSelected = (x, y) => {
@@ -153,19 +173,22 @@ class Piece extends React.Component {
 /* To Do
   + Be able to click on pieces
   + Store which piece was selected
-  - Move piece to selected space
+  + Move piece to selected space
   - Restrict to specific spaces to move to
   - Add flags for testing (example restrict where to place pieces)
   - Restrict which player is allowed to go based off turns
   - If a piece is captured it is removed from the board
   - Win condition
   - If a piece reaches the opposite side it becomes a king
+  - Highlight available positions
 */
 
 /* Notes
   - Rename space/piece selected
   - Remove console.log
   - Find new way to calculate which squre/piece was selected
+  - Uniform formatting
+  - No Magic Numbers, including gameboard 0, 1, 2
 */
 
 /* Stretch
