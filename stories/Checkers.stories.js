@@ -22,15 +22,27 @@ class Board extends React.Component {
       [2, 0, 2, 0, 2, 0, 2, 0],
       [0, 2, 0, 2, 0, 2, 0, 2],
       [2, 0, 2, 0, 2, 0, 2, 0]
-    ]
+    ],
+    selectedPiece: { x: 0, y: 0 }
   };
 
-  spaceSelected = () => {
-    console.log("Selected Space:");
+  spaceSelected = (x, y) => {
+    const spaceSize = this.props.size / 8;
+    x /= spaceSize;
+    y /= spaceSize;
+    console.log("Selected Space:", x, y);
   };
 
-  pieceSelected = () => {
-    console.log("Selected Piece:");
+  pieceSelected = (x, y) => {
+    const spaceSize = this.props.size / 8;
+    this.state.selectedPiece.x = Math.floor(x / spaceSize);
+    this.state.selectedPiece.y = Math.floor(y / spaceSize);
+
+    console.log(
+      "Selected Piece:",
+      Math.floor(x / spaceSize),
+      Math.floor(y / spaceSize)
+    );
   };
 
   render() {
@@ -94,6 +106,9 @@ class Board extends React.Component {
 }
 
 class Space extends React.Component {
+  clicked = () => {
+    this.props.onClick(this.props.x, this.props.y, this.props.size);
+  };
   render() {
     return (
       <rect
@@ -102,13 +117,16 @@ class Space extends React.Component {
         width={this.props.size}
         x={this.props.x}
         y={this.props.y}
-        onClick={this.props.onClick}
+        onClick={this.clicked}
       />
     );
   }
 }
 
 class Piece extends React.Component {
+  clicked = () => {
+    this.props.onClick(this.props.centerX, this.props.centerY);
+  };
   render() {
     return (
       <circle
@@ -116,7 +134,7 @@ class Piece extends React.Component {
         cy={this.props.centerY}
         fill={this.props.player === 1 ? "white" : "red"}
         r={this.props.radius}
-        onClick={this.props.onClick}
+        onClick={this.clicked}
       />
     );
   }
@@ -127,13 +145,14 @@ class Piece extends React.Component {
   - Are we guaranteed the boards position on the screen? (Is it valid to use postion to determine piece?)
   - so that Player One takes as many turns as possible and then Player Two does the same? (From README 2)(refers to jumps?)
   - there are some unused props like key and radius? Can I modify how these fields are used?
+  - Can I be guaranteed that the squares will remain squres?
 
   - Refer to Git version issue as discussed in https://github.com/typicode/husky/issues/326#issuecomment-517513832 for Huskey errors (PR?)
 */
 
 /* To Do
   + Be able to click on pieces
-  - Store which piece was selected
+  + Store which piece was selected
   - Move piece to selected space
   - Restrict to specific spaces to move to
   - Add flags for testing (example restrict where to place pieces)
@@ -141,6 +160,12 @@ class Piece extends React.Component {
   - If a piece is captured it is removed from the board
   - Win condition
   - If a piece reaches the opposite side it becomes a king
+*/
+
+/* Notes
+  - Rename space/piece selected
+  - Remove console.log
+  - Find new way to calculate which squre/piece was selected
 */
 
 /* Stretch
