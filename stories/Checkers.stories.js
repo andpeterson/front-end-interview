@@ -24,12 +24,15 @@ class Board extends React.Component {
       [2, 0, 2, 0, 2, 0, 2, 0]
     ]
   };
+
   spaceSelected = () => {
-    console.log("SelectedSpace:");
+    console.log("Selected Space:");
   };
+
   pieceSelected = () => {
-    console.log("SelectedPiece:");
+    console.log("Selected Piece:");
   };
+
   render() {
     const spaceSize = this.props.size / 8;
     const pieceRadius = spaceSize / 2;
@@ -124,9 +127,11 @@ class Piece extends React.Component {
   - Are we guaranteed the boards position on the screen? (Is it valid to use postion to determine piece?)
   - so that Player One takes as many turns as possible and then Player Two does the same? (From README 2)(refers to jumps?)
   - there are some unused props like key and radius? Can I modify how these fields are used?
+
+  - Refer to Git version issue as discussed in https://github.com/typicode/husky/issues/326#issuecomment-517513832 for Huskey errors (PR?)
 */
 
-/* ToDo
+/* To Do
   + Be able to click on pieces
   - Store which piece was selected
   - Move piece to selected space
