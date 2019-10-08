@@ -11,7 +11,18 @@ export const Checkers = () => {
   return <Board size={400} />;
 };
 
-const EmptySpace = 0;
+const BoardPiece = {
+  Empty: 0,
+  Player1Man: 1,
+  Player2Man: 2,
+  Player1King: 3,
+  Player2King: 4
+};
+
+const Player1 = 1;
+const Player2 = 2;
+
+const MaxManDistance = 1;
 
 class Board extends React.Component {
   state = {
@@ -37,18 +48,20 @@ class Board extends React.Component {
     return true;
   };
 
-  isValidManMove = (oldPos, newPos) => {
-    const direction = this.getBoardPiece(oldPos) == 1 ? 1 : -1; //need to figure direction somehow
+  isValidMove = (oldPos, newPos) => {
+    const piece = this.getBoardPiece(oldPos);
+    //If its a king check their movement
+    if (piece == BoardPiece.Player1King || piece == BoardPiece.Player2King) {
+      return isValidKingMove();
+    }
+    const direction = piece == BoardPiece.Player1Man ? 1 : -1; //need to figure direction somehow
     const deltaX = newPos.x - oldPos.x;
     const deltaY = newPos.y - oldPos.y;
-    console.log((deltaX + deltaY) % 2 == 0); //Should be even cause both directions change
-    console.log(Math.abs(deltaX) <= 1);
-    console.log(Math.abs(deltaY) <= 1);
     if (
-      this.getBoardPiece(newPos) == 0 &&
-      (deltaX + deltaY) % 2 == 0 &&
-      Math.abs(deltaX) <= 1 &&
-      Math.abs(deltaY) <= 1
+      this.getBoardPiece(newPos) == BoardPiece.Empty && //can only step onto an empty space
+      (deltaX + deltaY) % 2 == 0 && //has to travel on diagonals
+      Math.abs(deltaX) == MaxManDistance && //check max X
+      Math.abs(deltaY) == MaxManDistance //check max Y
     ) {
       return true;
     }
@@ -56,20 +69,10 @@ class Board extends React.Component {
   };
 
   movePiece = (oldPos, newPos) => {
-    if (this.isValidManMove(oldPos, newPos)) {
+    if (this.isValidMove(oldPos, newPos)) {
       let gameBoard = this.state.board; //temp
-      console.log(
-        `old x: ${oldPos.x} y: ${oldPos.y} val: ${
-          gameBoard[oldPos.y][oldPos.x]
-        }`
-      );
-      console.log(
-        `new x: ${newPos.x} y: ${newPos.y} val: ${
-          gameBoard[newPos.y][newPos.x]
-        }`
-      );
       gameBoard[newPos.y][newPos.x] = gameBoard[oldPos.y][oldPos.x];
-      gameBoard[oldPos.y][oldPos.x] = EmptySpace;
+      gameBoard[oldPos.y][oldPos.x] = BoardPiece.Empty;
       this.setState({ board: gameBoard, isPieceSelected: false });
     }
   };
@@ -134,7 +137,7 @@ class Board extends React.Component {
           return row.map((space, x) => {
             const spaceX = spaceSize * x;
 
-            if (space === 0) {
+            if (space === BoardPiece.Empty) {
               // The space is empty.
               return null;
             }
@@ -183,7 +186,7 @@ class Piece extends React.Component {
       <circle
         cx={this.props.centerX}
         cy={this.props.centerY}
-        fill={this.props.player === 1 ? "white" : "red"}
+        fill={this.props.player === Player1 ? "white" : "red"}
         r={this.props.radius}
         onClick={this.clicked}
       />
@@ -225,11 +228,13 @@ class Piece extends React.Component {
   - Uniform formatting
   - No Magic Numbers, including gameboard 0, 1, 2
   - Code Comments
+  - Semi-colons
 */
 
 /* Stretch
   - Click and drag pieces
-  - Suggestions
+  - Show possible moves
+  - Move Suggestions
   - Ai Opponent
   - Timing Turns
 */
