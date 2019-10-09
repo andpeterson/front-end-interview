@@ -32,6 +32,10 @@ const Player2 = -1;
 const ManStepDistance = 1;
 const ManJumpDistance = 2;
 
+const InitialPiecesCount = 12;
+
+const BoardSideSize = 8;
+
 class Board extends React.Component {
   state = {
     board: [
@@ -44,7 +48,10 @@ class Board extends React.Component {
       [0, -1, 0, -1, 0, -1, 0, -1],
       [-1, 0, -1, 0, -1, 0, -1, 0]
     ],
-    remainingPieces: { Player1: 12, Player2: 12 },
+    remainingPieces: {
+      Player1: InitialPiecesCount,
+      Player2: InitialPiecesCount
+    },
     selectedPiece: { x: 0, y: 0 },
     isPieceSelected: false,
     activePlayer: Player1
@@ -113,10 +120,6 @@ class Board extends React.Component {
     ) {
       return false;
     }
-    console.log("Generally Valid");
-    console.log(
-      Math.abs(deltaX) == ManJumpDistance && Math.abs(deltaY) == ManJumpDistance
-    );
     if (piece == BoardPiece.Player1King || piece == BoardPiece.Player2King) {
       return this.isValidKingMove();
     } else if (
@@ -133,11 +136,15 @@ class Board extends React.Component {
     return false;
   };
 
-  capturePiece = pos => {
-    this.getPiecePlayer(pos) == Player1
+  crownPiece = position => {
+    this.state.board[position.y][position.x] *= 2;
+  };
+
+  capturePiece = position => {
+    this.getPiecePlayer(position) == Player1
       ? this.state.remainingPieces.Player1--
       : this.state.remainingPieces.Player2--;
-    this.setBoardPiece(pos, BoardPiece.Empty);
+    this.setBoardPiece(position, BoardPiece.Empty);
   };
 
   movePiece = (oldPos, newPos) => {
@@ -149,6 +156,13 @@ class Board extends React.Component {
       const otherPlayer =
         this.getPiecePlayer(newPos) == Player1 ? Player2 : Player1;
       this.setState({ activePlayer: otherPlayer }); //try to combine
+      const piece = this.getBoardPiece(newPos);
+      if (
+        (Math.abs(piece) != 2 && newPos.y == 0) ||
+        newPos.y == BoardSideSize - 1
+      ) {
+        this.crownPiece(newPos);
+      }
       console.log(`Player${otherPlayer}'s turn`);
     }
   };
@@ -291,8 +305,7 @@ class Piece extends React.Component {
   + Restrict which player is allowed to go based off turns
   + If a piece is captured it is removed from the board
   + Win condition
-  - If a piece reaches the opposite side it becomes a king
-  - Highlight available positions
+  + If a piece reaches the opposite side it becomes a king
   - If you can take a piece you must take a piece
 */
 
