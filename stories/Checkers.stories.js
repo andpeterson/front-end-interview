@@ -18,6 +18,11 @@ const BoardPiece = {
   Player1King: 2,
   Player2King: -2
 };
+const IsKing = piece => Math.abs(piece) == 2;
+const IsMan = piece => Math.abs(piece) == 1;
+const IsPlayer1 = piece => piece > 0;
+const IsPlayer2 = piece => piece < 0;
+const IsEmpty = piece => (piece = 0);
 
 const Direction = {
   Up: -1,
@@ -36,6 +41,30 @@ const InitialPiecesCount = 12;
 
 const BoardSideSize = 8;
 
+class Vector {
+  constructor(x, y) {
+    this.x = x;
+    this.y = y;
+  }
+  addVector(rhs) {
+    return new Vector(this.x + rhs.x, this.y + rhs.y);
+  }
+  add(x, y) {
+    return new Vector(this.x + x, this.y + y);
+  }
+  multiply(multiplier) {
+    return new Vector(this.x * multiplier, this.y * multiplier);
+  }
+  inBounds(low, high) {
+    if (this.x < low || this.x > high) return false;
+    if (this.y < low || this.y > high) return false;
+    return true;
+  }
+  toString() {
+    return `(${this.x},${this.y})`;
+  }
+}
+
 class Board extends React.Component {
   state = {
     board: [
@@ -48,6 +77,7 @@ class Board extends React.Component {
       [0, -1, 0, -1, 0, -1, 0, -1],
       [-1, 0, -1, 0, -1, 0, -1, 0]
     ],
+    hasToJump: false,
     remainingPieces: {
       Player1: InitialPiecesCount,
       Player2: InitialPiecesCount
@@ -65,15 +95,26 @@ class Board extends React.Component {
 
   getPiecePlayer = position => {
     const piece = this.getBoardPiece(position);
-    if (piece == BoardPiece.Player1Man || piece == BoardPiece.Player1King) {
+    if (IsPlayer1(piece)) {
       return Player1;
-    } else if (
-      piece == BoardPiece.Player2Man ||
-      piece == BoardPiece.Player2King
-    ) {
+    } else if (IsPlayer2(piece)) {
       return Player2;
     }
     throw `Valid piece not found on (${position.x},${position.y})`;
+  };
+
+  isDifferentPlayer = (lhsPosition, rhsPosition) => {
+    if (
+      !rhsPosition.inBounds(0, BoardSideSize - 1) ||
+      this.getBoardPiece(lhsPosition) == BoardPiece.Empty ||
+      this.getBoardPiece(rhsPosition) == BoardPiece.Empty
+    ) {
+      return false;
+    }
+    if (this.getPiecePlayer(lhsPosition) != this.getPiecePlayer(rhsPosition)) {
+      return true;
+    }
+    return false;
   };
 
   isValidKingMove = () => {
@@ -81,6 +122,9 @@ class Board extends React.Component {
   };
 
   isValidManStep = (oldPos, newPos) => {
+    if (this.state.hasToJump == true) {
+      return false;
+    }
     const piece = this.getBoardPiece(oldPos);
     const playersDirection = Math.sign(piece);
     const deltaY = newPos.y - oldPos.y;
@@ -101,7 +145,7 @@ class Board extends React.Component {
     const pieceBetween = this.getBoardPiece(avgPos);
     if (playersDirection == Math.sign(deltaY) && pieceBetween != piece) {
       //needs to account for kings
-      this.capturePiece(avgPos);
+      this.capturePiece(avgPos); //should be moved up in the call stack
       return true;
     }
     return false;
@@ -120,7 +164,7 @@ class Board extends React.Component {
     ) {
       return false;
     }
-    if (piece == BoardPiece.Player1King || piece == BoardPiece.Player2King) {
+    if (IsKing(piece)) {
       return this.isValidKingMove();
     } else if (
       Math.abs(deltaX) == ManStepDistance &&
@@ -163,6 +207,7 @@ class Board extends React.Component {
       ) {
         this.crownPiece(newPos);
       }
+      this.state.hasToJump = this.nextPlayerHasToJump();
       console.log(`Player${otherPlayer}'s turn`);
     }
   };
@@ -191,6 +236,77 @@ class Board extends React.Component {
 
       console.log("Selected Piece:", Math.floor(pieceX), Math.floor(pieceY));
     }
+  };
+
+  manPieceHasToJumpInDirection = (position, direction) => {
+    if (
+      this.isDifferentPlayer(position, position.addVector(direction)) &&
+      this.getBoardPiece(position.addVector(direction.multiply(2))) ==
+        BoardPiece.Empty
+    ) {
+      return true;
+    }
+    return false;
+  };
+
+  kingPieceHasToJumpInDirection = (position, direction) => {
+    for (let i = 1; i > BoardSideSize - 1; ++i) {
+      if (
+        this.isDifferentPlayer(position, position.add(direction.multiply(i)))
+      ) {
+        if (this.getBoardPiece(position.add(direction.multiply(i + 1)))) {
+          return true;
+        } else {
+          return false;
+        }
+      }
+      if (position.add(i, i).inBounds(0, BoardSideSize - 1)) {
+        return false;
+      }
+    }
+  };
+
+  doesPieceHaveToJump = position => {
+    const piece = this.getBoardPiece(position);
+    if (IsMan(piece)) {
+      if (
+        this.manPieceHasToJumpInDirection(position, new Vector(1, 1)) ||
+        this.manPieceHasToJumpInDirection(position, new Vector(-1, 1)) ||
+        this.manPieceHasToJumpInDirection(position, new Vector(1, -1)) ||
+        this.manPieceHasToJumpInDirection(position, new Vector(-1, -1))
+      ) {
+        return true;
+      }
+      return false;
+    } else if (IsKing(piece)) {
+      if (
+        this.kingPieceHasToJumpInDirection(position, new Vector(1, 1)) ||
+        this.kingPieceHasToJumpInDirection(position, new Vector(-1, 1)) ||
+        this.kingPieceHasToJumpInDirection(position, new Vector(1, -1)) ||
+        this.kingPieceHasToJumpInDirection(position, new Vector(-1, -1))
+      ) {
+        return true;
+      }
+      return false;
+    }
+    return false;
+  };
+
+  nextPlayerHasToJump = () => {
+    for (let y = 0; y < BoardSideSize; ++y) {
+      for (let x = 0; x < BoardSideSize; ++x) {
+        const piece = this.getBoardPiece({ x: x, y: y });
+        console.log(`Jump active player ${this.state.activePlayer}`);
+        if (
+          piece != BoardPiece.Empty &&
+          this.getPiecePlayer({ x: x, y: y }) != this.state.activePlayer &&
+          this.doesPieceHaveToJump(new Vector(x, y))
+        ) {
+          return true;
+        }
+      }
+    }
+    return false;
   };
 
   render() {
@@ -306,7 +422,9 @@ class Piece extends React.Component {
   + If a piece is captured it is removed from the board
   + Win condition
   + If a piece reaches the opposite side it becomes a king
-  - If you can take a piece you must take a piece
+  - King Movement
+  + If you can take a piece you must take a piece
+  - If you can jump again you may
 */
 
 /* Notes
