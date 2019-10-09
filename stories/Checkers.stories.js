@@ -44,6 +44,7 @@ class Board extends React.Component {
       [0, -1, 0, -1, 0, -1, 0, -1],
       [-1, 0, -1, 0, -1, 0, -1, 0]
     ],
+    remainingPieces: { Player1: 12, Player2: 12 },
     selectedPiece: { x: 0, y: 0 },
     isPieceSelected: false,
     activePlayer: Player1
@@ -133,6 +134,9 @@ class Board extends React.Component {
   };
 
   capturePiece = pos => {
+    this.getPiecePlayer(pos) == Player1
+      ? this.state.remainingPieces.Player1--
+      : this.state.remainingPieces.Player2--;
     this.setBoardPiece(pos, BoardPiece.Empty);
   };
 
@@ -286,7 +290,7 @@ class Piece extends React.Component {
   - Add flags for testing (example restrict where to place pieces)
   + Restrict which player is allowed to go based off turns
   + If a piece is captured it is removed from the board
-  - Win condition
+  + Win condition
   - If a piece reaches the opposite side it becomes a king
   - Highlight available positions
   - If you can take a piece you must take a piece
