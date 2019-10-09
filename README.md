@@ -4,7 +4,7 @@ Front-End Interview Exercises
 
 ## First, Do This
 
-1. Make sure you have [Git](https://www.git-scm.com/) `>= 2.13.2` [Node.js](https://nodejs.org/en/) `>= 8.6.0` and [Yarn package manager](https://yarnpkg.com/lang/en/) installed on your computer.
+1. Make sure you have [Git](https://www.git-scm.com/) `>= 2.13.2`, [Node.js](https://nodejs.org/en/) `>= 8.6.0` and [Yarn package manager](https://yarnpkg.com/lang/en/) installed on your computer.
 1. Run `yarn` to install all the dependencies.
 1. Run `yarn start` to open the interview exercises in a new browser window, inside [Storybook](https://storybook.js.org/).
 
@@ -28,14 +28,14 @@ The rules of Checkers are available [here](https://www.wikihow.com/Play-Checkers
 
 ## Troubleshooting
 
-_Note: This is an incomplete list of errors feel free to make a [pull request](https://github.com/Intelight/front-end-interview/pulls) or [add issues](https://github.com/Intelight/front-end-interview/issues) if you run across any bugs or issues_
+_Note: This is an incomplete list of errors. Feel free to make a [pull request](https://github.com/Intelight/front-end-interview/pulls) or [add issues](https://github.com/Intelight/front-end-interview/issues) if you run across any bugs or issues_.
 
 ### Git Version
 
 `error: cannot spawn .git/hooks/pre-commit: No such file or directory on Windows`
 
-This error is caused by a requirement of [Huskey](https://github.com/typicode/husky) to be running git version 2.13.2 or later.
+This error is caused by a requirement of [Husky](https://github.com/typicode/husky) to be running git version 2.13.2 or later.
 
-If you see this error on in the command line version of git you can update it by following [these instructions](https://confluence.atlassian.com/bitbucketserver/installing-and-upgrading-git-776640906.html).
+If you see this error on the command line version of git, you can update it by following [these instructions](https://confluence.atlassian.com/bitbucketserver/installing-and-upgrading-git-776640906.html).
 
-If you ran into this error on a git client (such as GitHub Desktop) you may need to update your client as some clients have their own embeded version of git.
+If you ran into this error on a git client (such as GitHub Desktop), you may need to update your client as some clients have their own embedded version of git.
