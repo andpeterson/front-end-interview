@@ -14,9 +14,9 @@ export const Checkers = () => {
 const BoardPiece = {
   Empty: 0,
   Player1Man: 1,
-  Player2Man: 2,
-  Player1King: 3,
-  Player2King: 4
+  Player2Man: -1,
+  Player1King: 2,
+  Player2King: -2
 };
 
 const Direction = {
@@ -27,9 +27,10 @@ const Direction = {
 };
 
 const Player1 = 1;
-const Player2 = 2;
+const Player2 = -1;
 
-const MaxManDistance = 1;
+const ManStepDistance = 1;
+const ManJumpDistance = 2;
 
 class Board extends React.Component {
   state = {
@@ -39,9 +40,9 @@ class Board extends React.Component {
       [0, 1, 0, 1, 0, 1, 0, 1],
       [0, 0, 0, 0, 0, 0, 0, 0],
       [0, 0, 0, 0, 0, 0, 0, 0],
-      [2, 0, 2, 0, 2, 0, 2, 0],
-      [0, 2, 0, 2, 0, 2, 0, 2],
-      [2, 0, 2, 0, 2, 0, 2, 0]
+      [-1, 0, -1, 0, -1, 0, -1, 0],
+      [0, -1, 0, -1, 0, -1, 0, -1],
+      [-1, 0, -1, 0, -1, 0, -1, 0]
     ],
     selectedPiece: { x: 0, y: 0 },
     isPieceSelected: false,
@@ -49,6 +50,10 @@ class Board extends React.Component {
   };
 
   getBoardPiece = position => this.state.board[position.y][position.x];
+
+  setBoardPiece = (position, value) => {
+    this.state.board[position.y][position.x] = value;
+  };
 
   getPiecePlayer = position => {
     const piece = this.getBoardPiece(position);
@@ -67,26 +72,68 @@ class Board extends React.Component {
     return true;
   };
 
-  isValidMove = (oldPos, newPos) => {
+  isValidManStep = (oldPos, newPos) => {
     const piece = this.getBoardPiece(oldPos);
-    //If its a king check their movement
-    if (piece == BoardPiece.Player1King || piece == BoardPiece.Player2King) {
-      return isValidKingMove();
-    }
-    const playersDirection =
-      piece == BoardPiece.Player1Man ? Direction.Down : Direction.Up;
-    const deltaX = newPos.x - oldPos.x;
+    const playersDirection = Math.sign(piece);
     const deltaY = newPos.y - oldPos.y;
-    if (
-      this.getBoardPiece(newPos) == BoardPiece.Empty && //can only step onto an empty space
-      (deltaX + deltaY) % 2 == 0 && //has to travel on diagonals
-      playersDirection == deltaY && //player has to play in their direction
-      Math.abs(deltaX) == MaxManDistance && //check max X
-      Math.abs(deltaY) == MaxManDistance //check max Y
-    ) {
+    if (playersDirection == deltaY) {
       return true;
     }
     return false;
+  };
+
+  isValidManJump = (oldPos, newPos) => {
+    console.log("Got to jump");
+    const piece = this.getBoardPiece(oldPos); //rename
+    const playersDirection = Math.sign(piece);
+    const deltaY = newPos.y - oldPos.y;
+    const avgX = (oldPos.x + newPos.x) / 2;
+    const avgY = (oldPos.y + newPos.y) / 2;
+    const avgPos = { x: avgX, y: avgY };
+    const pieceBetween = this.getBoardPiece(avgPos);
+    if (playersDirection == Math.sign(deltaY) && pieceBetween != piece) {
+      //needs to account for kings
+      this.capturePiece(avgPos);
+      return true;
+    }
+    return false;
+  };
+
+  //This function should be broken up
+  isValidMove = (oldPos, newPos) => {
+    const piece = this.getBoardPiece(oldPos);
+    const deltaX = newPos.x - oldPos.x;
+    const deltaY = newPos.y - oldPos.y;
+
+    //All pieces can only move diagonally to open spaces
+    if (
+      (deltaX + deltaY) % 2 != 0 ||
+      this.getBoardPiece(newPos) != BoardPiece.Empty
+    ) {
+      return false;
+    }
+    console.log("Generally Valid");
+    console.log(
+      Math.abs(deltaX) == ManJumpDistance && Math.abs(deltaY) == ManJumpDistance
+    );
+    if (piece == BoardPiece.Player1King || piece == BoardPiece.Player2King) {
+      return this.isValidKingMove();
+    } else if (
+      Math.abs(deltaX) == ManStepDistance &&
+      Math.abs(deltaY) == ManStepDistance
+    ) {
+      return this.isValidManStep(oldPos, newPos);
+    } else if (
+      Math.abs(deltaX) == ManJumpDistance &&
+      Math.abs(deltaY) == ManJumpDistance
+    ) {
+      return this.isValidManJump(oldPos, newPos);
+    }
+    return false;
+  };
+
+  capturePiece = pos => {
+    this.setBoardPiece(pos, BoardPiece.Empty);
   };
 
   movePiece = (oldPos, newPos) => {
@@ -106,8 +153,10 @@ class Board extends React.Component {
     const spaceSize = this.props.size / 8;
     const spaceX = space.props.x / spaceSize;
     const spaceY = space.props.y / spaceSize;
+    const spacePosition = { x: spaceX, y: spaceY };
     if (this.state.isPieceSelected) {
-      this.movePiece(this.state.selectedPiece, { x: spaceX, y: spaceY }); //bad format
+      //put isValidMove here
+      this.movePiece(this.state.selectedPiece, spacePosition); //bad format
     }
     console.log("Selected Space:", spaceX, spaceY);
   };
@@ -222,15 +271,10 @@ class Piece extends React.Component {
 }
 
 //https://www.checkershistory.com/a-glossary-of-checkers.html
-/* Questions:
-  - What is the purpose of the key value in the Piece and the Space class?
-  - Are we guaranteed the boards position on the screen? (Is it valid to use postion to determine piece?)
-  - so that Player One takes as many turns as possible and then Player Two does the same? (From README 2)(refers to jumps?)
-  - there are some unused props like key and radius? Can I modify how these fields are used?
-  - Can I be guaranteed that the squares will remain squres?
-  - Can I change the value of the checker pieces? (Could use this to make white v black 1 and -1 to use that as the direction)
+/* Questions
+  - How do we determine the King piece
+  - How do we provide who won?
 
-  - Refer to Git version issue as discussed in https://github.com/typicode/husky/issues/326#issuecomment-517513832 for Huskey errors (PR?)
 */
 
 /* To Do
@@ -241,7 +285,7 @@ class Piece extends React.Component {
   + Restrict Man Pieces Direction
   - Add flags for testing (example restrict where to place pieces)
   + Restrict which player is allowed to go based off turns
-  - If a piece is captured it is removed from the board
+  + If a piece is captured it is removed from the board
   - Win condition
   - If a piece reaches the opposite side it becomes a king
   - Highlight available positions
@@ -249,20 +293,25 @@ class Piece extends React.Component {
 */
 
 /* Notes
+  - Some methods should be moved to piece class
   - Rename space/piece selected
   - Remove console.log
-  - Find new way to calculate which squre/piece was selected
+  - Find new way to calculate which square/piece was selected
   - Uniform formatting
   - No Magic Numbers, including gameboard 0, 1, 2
   - Code Comments
   - Semi-colons
   - Test functions (example Empty into getPlayer)
+  - == vs ===
 */
 
 /* Stretch
+  - Create position to be a property of Piece and Space
+  - Create a Vector class
   - Click and drag pieces
   - Show possible moves
   - Move Suggestions
   - Ai Opponent
   - Timing Turns
+  - Undo turn
 */
