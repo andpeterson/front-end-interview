@@ -84,7 +84,7 @@ class Board extends React.Component {
     },
     selectedPiece: { x: 0, y: 0 },
     isPieceSelected: false,
-    activePlayer: Player1
+    activePlayer: Player2
   };
 
   getBoardPiece = position => this.state.board[position.y][position.x];
@@ -408,7 +408,6 @@ class Piece extends React.Component {
 /* Questions
   - How do we determine the King piece
   - How do we provide who won?
-
 */
 
 /* To Do
