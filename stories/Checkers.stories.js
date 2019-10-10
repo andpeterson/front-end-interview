@@ -28,8 +28,8 @@ const BoardPiece = {
   Player1King: 2,
   Player2King: -2
 };
-const IsKing = piece => Math.abs(piece) == 2;
-const IsMan = piece => Math.abs(piece) == 1;
+const IsKing = piece => Math.abs(piece) === 2;
+const IsMan = piece => Math.abs(piece) === 1;
 const IsPlayer1 = piece => piece > 0;
 const IsPlayer2 = piece => piece < 0;
 const IsEmpty = piece => (piece = 0);
@@ -57,7 +57,7 @@ class Vector {
     this.y = y;
   }
   isDiagonal() {
-    return Math.abs(this.x) == Math.abs(this.y);
+    return Math.abs(this.x) === Math.abs(this.y);
   }
   addVector(rhs) {
     return new Vector(this.x + rhs.x, this.y + rhs.y);
@@ -72,10 +72,10 @@ class Vector {
     return new Vector(Math.abs(this.x), Math.abs(this.y));
   }
   equals(x, y) {
-    return this.x == x && this.y == y;
+    return this.x === x && this.y === y;
   }
   equalsVector(rhs) {
-    return this.x == rhs.x && this.y == rhs.y;
+    return this.x === rhs.x && this.y === rhs.y;
   }
   midpoint(rhs) {
     return new Vector((this.x + rhs.x) / 2, (this.y + rhs.y) / 2);
@@ -125,6 +125,11 @@ class Board extends React.Component {
     this.setState({ isPieceSelected: state });
   };
 
+  movePiece = (piece, space) => {
+    this.setBoardPiece(space.props.position, piece.props.player);
+    this.setBoardPiece(piece.props.position, BoardPiece.Empty);
+  };
+
   getTranslationDirection = (piece, space) => {
     const startPosition = piece.props.position;
     const endPosition = space.props.position;
@@ -134,7 +139,7 @@ class Board extends React.Component {
 
   switchActivePlayer = () => {
     const currentPlayer = this.state.activePlayer;
-    const otherPlayer = currentPlayer == Player1 ? Player2 : Player1;
+    const otherPlayer = currentPlayer === Player1 ? Player2 : Player1;
     this.setState({ activePlayer: otherPlayer });
   };
 
@@ -151,8 +156,8 @@ class Board extends React.Component {
   isDifferentPlayer = (lhsPosition, rhsPosition) => {
     if (
       !rhsPosition.inBounds(0, BoardSideSize - 1) ||
-      this.getBoardPiece(lhsPosition) == BoardPiece.Empty ||
-      this.getBoardPiece(rhsPosition) == BoardPiece.Empty
+      this.getBoardPiece(lhsPosition) === BoardPiece.Empty ||
+      this.getBoardPiece(rhsPosition) === BoardPiece.Empty
     ) {
       return false;
     }
@@ -172,7 +177,7 @@ class Board extends React.Component {
     }
     const playersDirection = this.state.activePlayer;
     const deltaY = space.props.position.sub(piece.props.position).y;
-    if (playersDirection == deltaY) {
+    if (playersDirection === deltaY) {
       return true;
     }
     return false;
@@ -184,7 +189,7 @@ class Board extends React.Component {
     const midpoint = piece.props.position.midpoint(space.props.position);
     const pieceBetween = this.getBoardPiece(midpoint);
     if (
-      playersDirection == travelDirection &&
+      playersDirection === travelDirection &&
       pieceBetween != piece.props.player
     ) {
       //needs to account for kings
@@ -219,38 +224,32 @@ class Board extends React.Component {
   };
 
   capturePiece = position => {
-    this.getPiecePlayer(position) == Player1
+    this.getPiecePlayer(position) === Player1
       ? this.state.remainingPieces.Player1--
       : this.state.remainingPieces.Player2--;
     this.setBoardPiece(position, BoardPiece.Empty);
   };
 
-  movePiece = (piece, space) => {
-    if (this.isValidMove(piece, space)) {
-      this.setBoardPiece(space.props.position, piece.props.player);
-      this.setBoardPiece(piece.props.position, BoardPiece.Empty);
-      //All of this should get moved out
-      this.setState({ isPieceSelected: false });
-      if (
-        (IsMan(piece.props.player) && space.props.position.y == 0) ||
-        space.props.position.y == BoardSideSize - 1
-      ) {
-        this.crownPiece(space);
-      }
-      this.switchActivePlayer();
-      this.state.hasToJump = this.nextPlayerHasToJump();
-    }
-  };
-
   spaceSelected = space => {
-    if (this.state.isPieceSelected) {
-      //put isValidMove here
-      this.movePiece(this.state.selectedPiece, space);
+    if (this.state.selectedPiece !== null) {
+      const piece = this.state.selectedPiece;
+      if (this.isValidMove(piece, space)) {
+        this.movePiece(piece, space);
+        this.setState({ selectedPiece: null });
+        if (
+          (IsMan(piece.props.player) && space.props.position.y === 0) ||
+          space.props.position.y === BoardSideSize - 1
+        ) {
+          this.crownPiece(space);
+        }
+        this.switchActivePlayer();
+        this.state.hasToJump = this.nextPlayerHasToJump();
+      }
     }
   };
 
   pieceSelected = piece => {
-    if (piece.props.player == this.state.activePlayer) {
+    if (piece.props.player === this.state.activePlayer) {
       this.setState({
         selectedPiece: piece,
         isPieceSelected: true
@@ -261,7 +260,7 @@ class Board extends React.Component {
   manPieceHasToJumpInDirection = (position, direction) => {
     if (
       this.isDifferentPlayer(position, position.addVector(direction)) &&
-      this.getBoardPiece(position.addVector(direction.multiply(2))) ==
+      this.getBoardPiece(position.addVector(direction.multiply(2))) ===
         BoardPiece.Empty
     ) {
       return true;
@@ -466,12 +465,12 @@ class Piece extends React.Component {
 /* Notes
   - Some methods should be moved to piece class
   - Rename space/piece selected
-  - Remove console.log
-  - Find new way to calculate which square/piece was selected
+  + Remove console.log
+  + Find new way to calculate which square/piece was selected
   - Uniform formatting
-  - No Magic Numbers, including gameboard 0, 1, 2
+  + No Magic Numbers, including gameboard 0, 1, 2
   - Code Comments
-  - Semi-colons
+  + Semi-colons
   - Test functions (example Empty into getPlayer)
   - == vs ===
 */
