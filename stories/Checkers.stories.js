@@ -135,7 +135,6 @@ class Board extends React.Component {
   };
 
   isValidManJump = (oldPos, newPos) => {
-    console.log("Got to jump");
     const piece = this.getBoardPiece(oldPos); //rename
     const playersDirection = Math.sign(piece);
     const deltaY = newPos.y - oldPos.y;
@@ -296,7 +295,6 @@ class Board extends React.Component {
     for (let y = 0; y < BoardSideSize; ++y) {
       for (let x = 0; x < BoardSideSize; ++x) {
         const piece = this.getBoardPiece({ x: x, y: y });
-        console.log(`Jump active player ${this.state.activePlayer}`);
         if (
           piece != BoardPiece.Empty &&
           this.getPiecePlayer({ x: x, y: y }) != this.state.activePlayer &&
