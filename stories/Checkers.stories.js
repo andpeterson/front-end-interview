@@ -12,6 +12,7 @@ export const Checkers = () => {
   return <Board size={400} />;
 };
 
+//Colors used for board spaces and pieces
 const Colors = {
   Player1Man: "white",
   Player1King: "gray",
@@ -21,6 +22,7 @@ const Colors = {
   UnusedSpaces: "lightgray"
 };
 
+//Board piece values stored in Board.state.board
 const BoardPiece = {
   Empty: 0,
   Player1Man: 1,
@@ -28,66 +30,92 @@ const BoardPiece = {
   Player1King: 2,
   Player2King: -2
 };
+
+//Some quick functions for determing what pieces are
 const IsKing = piece => Math.abs(piece) === 2;
 const IsMan = piece => Math.abs(piece) === 1;
 const IsPlayer1 = piece => piece > 0;
 const IsPlayer2 = piece => piece < 0;
 const IsEmpty = piece => (piece = 0);
 
-const Direction = {
-  Up: -1,
-  Down: 1,
-  Right: 1,
-  Left: -1
-};
-
+//Player board values
 const Player1 = 1;
 const Player2 = -1;
 
+//Piece Movement distances
 const ManStepDistance = 1;
 const ManJumpDistance = 2;
 
+//The initial amount of pieces each player starts with
 const InitialPiecesCount = 12;
 
+//The size of one side of the board in spaces
 const BoardSideSize = 8;
 
+//A simple (x,y) vector class for assisting in basic vector calculations
 class Vector {
   constructor(x, y) {
     this.x = x;
     this.y = y;
   }
+  //is vector diagonal ex (1,1) or (3,-3)
   isDiagonal() {
     return Math.abs(this.x) === Math.abs(this.y);
   }
+
+  //adding two vectors together
   addVector(rhs) {
     return new Vector(this.x + rhs.x, this.y + rhs.y);
   }
+
+  //adding an x,y value pair to a vector
   add(x, y) {
     return new Vector(this.x + x, this.y + y);
   }
+
+  //subtract one vector from another
   sub(rhs) {
     return new Vector(this.x - rhs.x, this.y - rhs.y);
   }
+
+  //Absolute both x and y
   abs() {
     return new Vector(Math.abs(this.x), Math.abs(this.y));
   }
-  equals(x, y) {
+
+  //does vector equal an (x,y) pair?
+  isEqual(x, y) {
     return this.x === x && this.y === y;
   }
-  equalsVector(rhs) {
+
+  //does vector equal another vector?
+  isEqualToVector(rhs) {
     return this.x === rhs.x && this.y === rhs.y;
   }
+
+  //finds a midpoint between two vectors (returns floats)
   midpoint(rhs) {
     return new Vector((this.x + rhs.x) / 2, (this.y + rhs.y) / 2);
   }
+
+  //multiplies both x and y by a multiplier
   multiply(multiplier) {
     return new Vector(this.x * multiplier, this.y * multiplier);
   }
+
+  //do both x and y exist in bounds?
   inBounds(low, high) {
     if (this.x < low || this.x > high) return false;
     if (this.y < low || this.y > high) return false;
     return true;
   }
+
+  //gets (x,y) direction 'unit value'
+  baseDirection() {
+    return new Vector(Math.sign(x), Math.sign(y));
+  }
+
+  //returns a string format of (x,y)
   toString() {
     return `(${this.x},${this.y})`;
   }
@@ -95,6 +123,7 @@ class Vector {
 
 class Board extends React.Component {
   state = {
+    //game board storing all the pieces
     board: [
       [0, 1, 0, 1, 0, 1, 0, 1],
       [1, 0, 1, 0, 1, 0, 1, 0],
@@ -105,44 +134,56 @@ class Board extends React.Component {
       [0, -1, 0, -1, 0, -1, 0, -1],
       [-1, 0, -1, 0, -1, 0, -1, 0]
     ],
+    //does current player have to jump this turn
     hasToJump: false,
+    //Remaining piece counts for each player to determine winner
     remainingPieces: {
       Player1: InitialPiecesCount,
       Player2: InitialPiecesCount
     },
+    //Winner of current game
+    winner: null,
+    //currently selected piece
     selectedPiece: null,
-    isPieceSelected: false,
+    //currently players turn
     activePlayer: Player2
   };
 
+  //gets the board piece value from the board using its position
   getBoardPiece = position => this.state.board[position.y][position.x];
 
+  //sets the value of a position of the board to a given value
   setBoardPiece = (position, value) => {
     this.state.board[position.y][position.x] = value;
   };
 
-  setPieceSelectedState = state => {
-    this.setState({ isPieceSelected: state });
+  //sets the pieceSelected state to a given state
+  setSelectedPiece = piece => {
+    this.setState({ selectedPiece: piece });
   };
 
+  //moves a piece from its current location to a new location
   movePiece = (piece, space) => {
     this.setBoardPiece(space.props.position, piece.props.player);
     this.setBoardPiece(piece.props.position, BoardPiece.Empty);
   };
 
-  getTranslationDirection = (piece, space) => {
+  //gets the y direction of a translaton from a piece to a space
+  getTranslationYDirection = (piece, space) => {
     const startPosition = piece.props.position;
     const endPosition = space.props.position;
     const deltaY = endPosition.sub(startPosition).y;
     return Math.sign(deltaY);
   };
 
+  //switches the current active player in this.state
   switchActivePlayer = () => {
     const currentPlayer = this.state.activePlayer;
     const otherPlayer = currentPlayer === Player1 ? Player2 : Player1;
     this.setState({ activePlayer: otherPlayer });
   };
 
+  //gets the player of a given piece; throws exception if no piece was found
   getPiecePlayer = position => {
     const piece = this.getBoardPiece(position);
     if (IsPlayer1(piece)) {
@@ -153,6 +194,7 @@ class Board extends React.Component {
     throw `Valid piece not found on (${position.x},${position.y})`;
   };
 
+  //is the player of two different pieces different?
   isDifferentPlayer = (lhsPosition, rhsPosition) => {
     if (
       !rhsPosition.inBounds(0, BoardSideSize - 1) ||
@@ -167,41 +209,66 @@ class Board extends React.Component {
     return false;
   };
 
-  isValidKingMove = () => {
-    return true;
+  //is the attempted King move a valid move? (untested)
+  isValidKingMove = (piece, space) => {
+    const delta = space.props.position.sub(piece.props.position);
+    const direction = delta.baseDirection();
+    let i = piece.props.position.add(direction);
+    //iterate from the piece to the space checking that the path is clear
+    while (!i.isEqualToVector(space.props.position)) {
+      //can't jump over own pieces
+      if (!isDifferentPlayer(getPiecePlayer(i), piece.props.player)) {
+        return false;
+      }
+      //if jumping over and landing just past opponent, then valid
+      else if (!isDifferentPlayer(getPiecePlayer(i), piece.props.player)) {
+        if (i.add(direction) == space.props.direction) {
+          this.capturePiece(i);
+          return true;
+        }
+        return false;
+      }
+      i = i.add(direction); //keep iterating to space
+    }
   };
 
+  //is the attempted Man move a valid move?
   isValidManStep = (piece, space) => {
+    //if player has to jump a step is not a valid move
     if (this.state.hasToJump === true) {
       return false;
     }
     const playersDirection = this.state.activePlayer;
     const deltaY = space.props.position.sub(piece.props.position).y;
+    //if traveling in the correct direction, its a valid move
     if (playersDirection === deltaY) {
       return true;
     }
     return false;
   };
 
+  //is the attempted Man jump/capture a valid move?
   isValidManJump = (piece, space) => {
     const playersDirection = this.state.activePlayer;
-    const travelDirection = this.getTranslationDirection(piece, space);
+    const travelDirection = this.getTranslationYDirection(piece, space);
     const midpoint = piece.props.position.midpoint(space.props.position);
     const pieceBetween = this.getBoardPiece(midpoint);
+    //if traveling in the correct direction and the jumped piece is an opponents
+    //then its a valid jump and the opponents piece is captured
     if (
       playersDirection === travelDirection &&
-      pieceBetween != piece.props.player
+      pieceBetween !== piece.props.player
     ) {
-      //needs to account for kings
-      this.capturePiece(midpoint); //should be moved up in the call stack
+      this.capturePiece(midpoint);
       return true;
     }
     return false;
   };
 
-  //This function should be broken up
+  //Tests if the provided move is a valid move by calling functions for
+  //the specific move the player is attempting
   isValidMove = (piece, space) => {
-    const delta = piece.props.position.sub(space.props.position);
+    const delta = space.props.position.sub(piece.props.position);
     //All pieces can only move diagonally to open spaces
     if (
       !delta.isDiagonal() ||
@@ -210,19 +277,22 @@ class Board extends React.Component {
       return false;
     }
     if (IsKing(piece.props.player)) {
-      return this.isValidKingMove();
-    } else if (delta.abs().equals(ManStepDistance, ManStepDistance)) {
+      return this.isValidKingMove(piece, space);
+    } else if (delta.abs().isEqual(ManStepDistance, ManStepDistance)) {
       return this.isValidManStep(piece, space);
-    } else if (delta.abs().equals(ManJumpDistance, ManJumpDistance)) {
+    } else if (delta.abs().isEqual(ManJumpDistance, ManJumpDistance)) {
       return this.isValidManJump(piece, space);
     }
     return false;
   };
 
+  //Give that man a crown, he deserves to be a king
   crownPiece = space => {
     this.state.board[space.props.position.y][space.props.position.x] *= 2;
   };
 
+  //Captures a piece and deletes it from the board
+  //decrementing the players remaining pieces
   capturePiece = position => {
     this.getPiecePlayer(position) === Player1
       ? this.state.remainingPieces.Player1--
@@ -230,12 +300,16 @@ class Board extends React.Component {
     this.setBoardPiece(position, BoardPiece.Empty);
   };
 
+  //handle a space being selected
   spaceSelected = space => {
+    //if no piece was selected, do nothing
     if (this.state.selectedPiece !== null) {
       const piece = this.state.selectedPiece;
+      //if the move wasn't valid, do nothing
       if (this.isValidMove(piece, space)) {
         this.movePiece(piece, space);
-        this.setState({ selectedPiece: null });
+        this.setSelectedPiece(null);
+        //If man is on the border, crown that piece
         if (
           (IsMan(piece.props.player) && space.props.position.y === 0) ||
           space.props.position.y === BoardSideSize - 1
@@ -248,15 +322,14 @@ class Board extends React.Component {
     }
   };
 
+  //handle a piece being selected
   pieceSelected = piece => {
     if (piece.props.player === this.state.activePlayer) {
-      this.setState({
-        selectedPiece: piece,
-        isPieceSelected: true
-      });
+      this.setSelectedPiece(piece);
     }
   };
 
+  //calculate if this man piece has to jump next turn
   manPieceHasToJumpInDirection = (position, direction) => {
     if (
       this.isDifferentPlayer(position, position.addVector(direction)) &&
@@ -268,6 +341,7 @@ class Board extends React.Component {
     return false;
   };
 
+  //Caluclate if this king piece has to jump next turn
   kingPieceHasToJumpInDirection = (position, direction) => {
     for (let i = 1; i > BoardSideSize - 1; ++i) {
       if (
@@ -285,18 +359,19 @@ class Board extends React.Component {
     }
   };
 
-  //need to fix again
+  //Calculate if this specific piece has to jump next turn
   doesPieceHaveToJump = position => {
     const piece = this.getBoardPiece(position);
+    const nextPlayerDirection = this.state.activePlayer * -1;
     if (IsMan(piece)) {
       if (
         this.manPieceHasToJumpInDirection(
           position,
-          new Vector(1, this.state.activePlayer * -1)
+          new Vector(1, nextPlayerDirection)
         ) ||
         this.manPieceHasToJumpInDirection(
           position,
-          new Vector(-1, this.state.activePlayer * -1)
+          new Vector(-1, nextPlayerDirection)
         )
       ) {
         return true;
@@ -316,7 +391,11 @@ class Board extends React.Component {
     return false;
   };
 
+  //Calculate if the next player will have to jump their next turn
   nextPlayerHasToJump = () => {
+    //iterate over all the spaces looking for pieces
+    //if there is a piece we'll need to check its neighbors
+    //to see if it needs to jump next turn
     for (let y = 0; y < BoardSideSize; ++y) {
       for (let x = 0; x < BoardSideSize; ++x) {
         const piece = this.getBoardPiece({ x: x, y: y });
@@ -395,6 +474,7 @@ class Board extends React.Component {
 }
 
 class Space extends React.Component {
+  //call onClick callback if clicked
   clicked = () => {
     this.props.onClick(this);
   };
@@ -413,10 +493,12 @@ class Space extends React.Component {
 }
 
 class Piece extends React.Component {
+  //call onClick callback if clicked
   clicked = () => {
     this.props.onClick(this);
   };
 
+  //calculates piece display color
   pieceFillColor = () => {
     switch (this.props.player) {
       case BoardPiece.Player1Man:
@@ -464,21 +546,23 @@ class Piece extends React.Component {
 
 /* Notes
   - Some methods should be moved to piece class
+  - properties in state should be move to props
   - Rename space/piece selected
   + Remove console.log
   + Find new way to calculate which square/piece was selected
   - Uniform formatting
   + No Magic Numbers, including gameboard 0, 1, 2
-  - Code Comments
+  + Code Comments
   + Semi-colons
   - Test functions (example Empty into getPlayer)
-  - == vs ===
+  + == vs ===
+  - Capture piece should be moved up in the call stack
 */
 
 /* Stretch
   - Test Cases
-  - Create position to be a property of Piece and Space
-  - Create a Vector class
+  + Create position to be a property of Piece and Space
+  + Create a Vector class
   - Click and drag pieces
   - Show possible moves
   - Move Suggestions
