@@ -444,10 +444,6 @@ class Piece extends React.Component {
 }
 
 //https://www.checkershistory.com/a-glossary-of-checkers.html
-/* Questions
-  - How do we determine the King piece
-  - How do we provide who won?
-*/
 
 /* To Do
   + Be able to click on pieces
