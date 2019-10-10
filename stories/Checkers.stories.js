@@ -171,7 +171,6 @@ class Board extends React.Component {
     const playersDirection = this.state.activePlayer;
     const deltaY = space.props.position.sub(piece.props.position).y;
     if (playersDirection == deltaY) {
-      console.log(piece);
       return true;
     }
     return false;
@@ -246,11 +245,6 @@ class Board extends React.Component {
       //put isValidMove here
       this.movePiece(this.state.selectedPiece, space);
     }
-    console.log(
-      "Selected Space:",
-      space.props.position.x,
-      space.props.position.y
-    );
   };
 
   pieceSelected = piece => {
@@ -259,19 +253,10 @@ class Board extends React.Component {
         selectedPiece: piece,
         isPieceSelected: true
       });
-
-      console.log(
-        "Selected Piece:",
-        Math.floor(piece.props.position.x),
-        Math.floor(piece.props.position.y)
-      );
     }
   };
 
   manPieceHasToJumpInDirection = (position, direction) => {
-    console.log(
-      this.isDifferentPlayer(position, position.addVector(direction))
-    );
     if (
       this.isDifferentPlayer(position, position.addVector(direction)) &&
       this.getBoardPiece(position.addVector(direction.multiply(2))) ==
