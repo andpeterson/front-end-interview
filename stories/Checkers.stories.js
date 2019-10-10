@@ -544,22 +544,8 @@ class Piece extends React.Component {
   - If you can jump again you may
 */
 
-/* Notes
-  - Some methods should be moved to piece class
-  - properties in state should be move to props
-  - Rename space/piece selected
-  + Remove console.log
-  + Find new way to calculate which square/piece was selected
-  - Uniform formatting
-  + No Magic Numbers, including gameboard 0, 1, 2
-  + Code Comments
-  + Semi-colons
-  - Test functions (example Empty into getPlayer)
-  + == vs ===
-  - Capture piece should be moved up in the call stack
-*/
-
 /* Stretch
+  - Refactor into components directory with separate files
   - Test Cases
   + Create position to be a property of Piece and Space
   + Create a Vector class
