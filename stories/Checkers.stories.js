@@ -310,7 +310,7 @@ class Board extends React.Component {
   };
 
   render() {
-    const spaceSize = this.props.size / 8;
+    const spaceSize = this.props.size / BoardSideSize;
     const pieceRadius = spaceSize / 2;
 
     return (
