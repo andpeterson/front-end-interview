@@ -12,11 +12,13 @@ export const Checkers = () => {
   return <Board size={400} />;
 };
 
-const PieceColors = {
+const Colors = {
   Player1Man: "white",
   Player1King: "gray",
   Player2Man: "red",
-  Player2King: "darkred"
+  Player2King: "darkred",
+  UsedSpaces: "green",
+  UnusedSpaces: "lightgray"
 };
 
 const BoardPiece = {
@@ -400,7 +402,7 @@ class Space extends React.Component {
   render() {
     return (
       <rect
-        fill={this.props.shade ? "green" : "lightgray"}
+        fill={this.props.shade ? Colors.UsedSpaces : Colors.UnusedSpaces}
         height={this.props.size}
         width={this.props.size}
         x={this.props.x}
@@ -419,13 +421,13 @@ class Piece extends React.Component {
   pieceFillColor = () => {
     switch (this.props.player) {
       case BoardPiece.Player1Man:
-        return PieceColors.Player1Man;
+        return Colors.Player1Man;
       case BoardPiece.Player1King:
-        return PieceColors.Player1King;
+        return Colors.Player1King;
       case BoardPiece.Player2Man:
-        return PieceColors.Player2Man;
+        return Colors.Player2Man;
       case BoardPiece.Player2King:
-        return PieceColors.Player2King;
+        return Colors.Player2King;
     }
   };
   render() {
@@ -459,6 +461,8 @@ class Piece extends React.Component {
   + Win condition
   + If a piece reaches the opposite side it becomes a king
   - King Movement
+  - King capturing logic
+  - If king has to jump logic
   + If you can take a piece you must take a piece
   - If you can jump again you may
 */
